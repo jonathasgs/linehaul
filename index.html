@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Linehaul Definitivo">
-<title>Linehaul Definitivo</title>
+<title>Linehaul</title>
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -54,7 +54,7 @@ button:active{transform:scale(.98)}
 <body>
 <div class="app">
   <div class="topo">
-    <h2>Linehaul Definitivo</h2>
+    <h2>Linehaul</h2>
     <div class="badge" id="statusApp">App pronto</div>
   </div>
 
@@ -62,19 +62,19 @@ button:active{transform:scale(.98)}
 
   <div class="acoes">
     <button class="reset" onclick="resetar()">Resetar</button>
-    <button class="relatorio" onclick="relatorio()">Relatório</button>
+    <button class="relatorio" onclick="relatorio()">Gerar Relatório</button>
     <button class="copiar" onclick="copiar()">Copiar</button>
     <button class="instalar" id="btnInstalar" style="display:none">Instalar app</button>
   </div>
 
   <pre id="saida"></pre>
-  <div class="rodape">Modo escuro automático ativado. Para aparecer “Adicionar à tela inicial”, hospede estes arquivos em HTTPS.</div>
+  <!-- <div class="rodape">Modo escuro automático ativado. Para aparecer “Adicionar à tela inicial”, hospede estes arquivos em HTTPS.</div> -->
 </div>
 
 <script>
 const unidades = [
-"Santana – SP0","Rio de Janeiro – RJ01","Simões Filho – BA","Jaboatão - PE",
-"Louveira – SP07","Gravataí – RS","Goiânia – GO02","Betim – MG",
+"Santana – SP0","Rio de Janeiro – RJ","Simões Filho – BA","Jaboatão - PE",
+"Louveira – SP07","Gravataí – RS","Goiânia – GO","Betim – MG",
 "Cravinhos – SP05","Curitiba – PR","Itajaí – SC","Londrina - LPR20","Maringá - LPR18"
 ];
 
