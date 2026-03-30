@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#007bff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Linehaul Definitivo">
+<title>Linehaul Definitivo</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6f8; --card:#ffffff; --text:#1f2937; --muted:#6c757d; --danger:#d9534f;
+  --green:#28a745; --green2:#20c997; --blue:#0dcaf0; --primary:#007bff; --primary-dark:#0b5ed7;
+  --truck:#adb5bd; --counter:#e9ecef; --shadow:0 1px 2px rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark) {
+  :root{
+    --bg:#0f1115; --card:#171a21; --text:#e8edf5; --muted:#3c4350; --danger:#d9534f;
+    --green:#198754; --green2:#159b80; --blue:#0ea5c9; --primary:#3d8bfd; --primary-dark:#6ea8fe;
+    --truck:#4b5563; --counter:#242933; --shadow:0 1px 2px rgba(0,0,0,.35);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:'Inter',Arial,sans-serif;padding:10px;background:var(--bg);margin:0;color:var(--text);transition:background .2s,color .2s}
+.app{max-width:980px;margin:0 auto}
+.topo{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 12px}
+h2{margin:0;font-size:22px;font-weight:700}
+.badge{background:rgba(0,123,255,.12);color:var(--primary-dark);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700}
+.linha{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+button{padding:9px 8px;font-weight:700;border:none;border-radius:8px;font-size:12px;box-shadow:var(--shadow)}
+button:active{transform:scale(.98)}
+.menos{background:var(--danger);color:#fff}
+.mais{background:var(--green);color:#fff}
+.mais5{background:var(--green2);color:#fff}
+.mais10{background:var(--blue);color:#062531}
+.nome{background:var(--muted);color:#fff;padding:9px 8px;border-radius:8px;flex:1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;box-shadow:var(--shadow)}
+.contador{width:42px;text-align:center;font-weight:700;background:var(--counter);padding:9px;border-radius:8px;box-shadow:var(--shadow)}
+.truck{background:var(--truck);color:#fff}
+.truck.ativo{background:var(--green);color:#fff}
+.acoes{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.reset{background:#343a40;color:#fff}
+.relatorio{background:var(--primary);color:#fff}
+.copiar{background:#17a2b8;color:#fff}
+.instalar{background:#6f42c1;color:#fff}
+#saida{white-space:pre-wrap;background:var(--card);padding:12px;border-radius:10px;margin-top:10px;font-size:13px;min-height:72px;box-shadow:var(--shadow)}
+.rodape{margin-top:12px;font-size:12px;opacity:.85}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topo">
+    <h2>Linehaul Definitivo</h2>
+    <div class="badge" id="statusApp">App pronto</div>
+  </div>
+
+  <div id="lista"></div>
+
+  <div class="acoes">
+    <button class="reset" onclick="resetar()">Resetar</button>
+    <button class="relatorio" onclick="relatorio()">Relatório</button>
+    <button class="copiar" onclick="copiar()">Copiar</button>
+    <button class="instalar" id="btnInstalar" style="display:none">Instalar app</button>
+  </div>
+
+  <pre id="saida"></pre>
+  <div class="rodape">Modo escuro automático ativado. Para aparecer “Adicionar à tela inicial”, hospede estes arquivos em HTTPS.</div>
+</div>
+
+<script>
+const unidades = [
+"Santana – SP0","Rio de Janeiro – RJ01","Simões Filho – BA","Jaboatão - PE",
+"Louveira – SP07","Gravataí – RS","Goiânia – GO02","Betim – MG",
+"Cravinhos – SP05","Curitiba – PR","Itajaí – SC","Londrina - LPR20","Maringá - LPR18"
+];
+
+let valores = new Array(unidades.length).fill(0);
+let carregando = new Array(unidades.length).fill(false);
+let deferredPrompt = null;
+
+function render(){
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+  unidades.forEach((u,i)=>{
+    lista.innerHTML += `
+    <div class="linha">
+      <button class="menos" onclick="add(${i},-1)">-</button>
+      <div class="nome">${u}</div>
+      <button class="mais" onclick="add(${i},1)">+1</button>
+      <button class="mais5" onclick="add(${i},5)">+5</button>
+      <button class="mais10" onclick="add(${i},10)">+10</button>
+      <div class="contador">${valores[i]}</div>
+      <button class="truck ${carregando[i]?'ativo':''}" onclick="toggle(${i})">🚚</button>
+    </div>`;
+  });
+}
+
+function add(i,v){
+  valores[i]+=v;
+  if(valores[i]<0) valores[i]=0;
+  salvar();
+  render();
+}
+
+function toggle(i){
+  carregando[i]=!carregando[i];
+  salvar();
+  render();
+}
+
+function salvar(){
+  localStorage.setItem("linehaul_valores",JSON.stringify(valores));
+  localStorage.setItem("linehaul_truck",JSON.stringify(carregando));
+}
+
+function carregar(){
+  const v = JSON.parse(localStorage.getItem("linehaul_valores"));
+  const t = JSON.parse(localStorage.getItem("linehaul_truck"));
+  if(v && v.length===unidades.length) valores=v;
+  if(t && t.length===unidades.length) carregando=t;
+}
+
+function resetar(){
+  if(!confirm("Resetar tudo?")) return;
+  valores.fill(0);
+  carregando.fill(false);
+  localStorage.removeItem("linehaul_valores");
+  localStorage.removeItem("linehaul_truck");
+  render();
+  document.getElementById("saida").innerText = "Resetado";
+}
+
+function gerarTexto(){
+  let total=0, txt="";
+  unidades.forEach((u,i)=>{
+    total += valores[i];
+    txt += u + ": " + valores[i];
+    if(carregando[i]) txt += " *Carregando...*";
+    txt += "\n";
+  });
+  txt += "\nTotal: " + total;
+  return txt;
+}
+
+function relatorio(){
+  document.getElementById("saida").innerText = gerarTexto();
+}
+
+function copiarFallback(texto){
+  const area = document.createElement("textarea");
+  area.value = texto;
+  area.setAttribute("readonly","");
+  area.style.position = "fixed";
+  area.style.left = "-9999px";
+  document.body.appendChild(area);
+  area.focus();
+  area.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch(e) {}
+  document.body.removeChild(area);
+  return ok;
+}
+
+async function copiar(){
+  const texto = document.getElementById("saida").innerText.trim();
+  if(!texto){
+    alert("Gere o relatório primeiro!");
+    return;
+  }
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(texto);
+      alert("Copiado!");
+      return;
+    }
+  }catch(e){}
+  const ok = copiarFallback(texto);
+  alert(ok ? "Copiado!" : "Não foi possível copiar automaticamente.");
+}
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById("btnInstalar").style.display = "inline-block";
+  document.getElementById("statusApp").innerText = "Pode instalar";
+});
+
+document.getElementById("btnInstalar").addEventListener("click", async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById("btnInstalar").style.display = "none";
+});
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  });
+}
+
+carregar();
+render();
+</script>
+</body>
+</html>
