@@ -68,14 +68,37 @@ button:active{transform:scale(.98)}
   </div>
 
   <pre id="saida"></pre>
-  <!-- <div class="rodape">Modo escuro automático ativado. Para aparecer “Adicionar à tela inicial”, hospede estes arquivos em HTTPS.</div> -->
 </div>
 
 <script>
 const unidades = [
-"Santana – SP0","Rio de Janeiro – RJ","Simões Filho – BA","Jaboatão - PE",
-"Louveira – SP07","Gravataí – RS","Goiânia – GO","Betim – MG",
-"Cravinhos – SP05","Curitiba – PR","Itajaí – SC","Londrina - LPR20","Maringá - LPR18"
+"Santana – SP0",
+"Rio de Janeiro – RJ",
+"Simões Filho – BA",
+"Jaboatão - PE",
+"Louveira – SP07",
+"Gravataí – RS",
+"Goiânia – GO",
+"Betim – MG",
+"Cravinhos – SP05",
+"Curitiba – PR",
+"Londrina - LPR20",
+"Maringá - LPR18"
+];
+
+const bolinhas = [
+"🔴", // Santana - Rosa aproximado
+"⚪", // Rio de Janeiro - Cinza aproximado
+"🔵", // Simões Filho - Azul piscina aproximado
+"🟣", // Jaboatão - Roxo
+"🟤", // Louveira - Marrom
+"🟡", // Gravataí - Amarelo
+"🟠", // Goiânia - Laranja
+"🟢", // Betim - Verde musgo aproximado
+"⚫", // Cravinhos - Preto
+"🟢", // Curitiba - Verde
+"🟣", // Londrina - Violeta
+"⚪" // Maringá - Laranja e cinza aproximado
 ];
 
 let valores = new Array(unidades.length).fill(0);
@@ -120,8 +143,12 @@ function salvar(){
 function carregar(){
   const v = JSON.parse(localStorage.getItem("linehaul_valores"));
   const t = JSON.parse(localStorage.getItem("linehaul_truck"));
+
   if(v && v.length===unidades.length) valores=v;
+  else localStorage.removeItem("linehaul_valores");
+
   if(t && t.length===unidades.length) carregando=t;
+  else localStorage.removeItem("linehaul_truck");
 }
 
 function resetar(){
@@ -134,15 +161,43 @@ function resetar(){
   document.getElementById("saida").innerText = "Resetado";
 }
 
+function nomeLimpo(unidade){
+  return unidade
+    .replace(" – SP0","")
+    .replace(" – RJ","")
+    .replace(" – BA","")
+    .replace(" - PE","")
+    .replace(" – SP07","")
+    .replace(" – RS","")
+    .replace(" – GO","")
+    .replace(" – MG","")
+    .replace(" – SP05","")
+    .replace(" – PR","")
+    .replace(" - LPR20","")
+    .replace(" - LPR18","");
+}
+
 function gerarTexto(){
   let total=0, txt="";
+  let emDoca = [];
+
   unidades.forEach((u,i)=>{
     total += valores[i];
-    txt += u + ": " + valores[i];
-    if(carregando[i]) txt += " *Carregando...*";
+    txt += bolinhas[i] + " " + u + ": " + valores[i];
+
+    if(carregando[i]){
+      emDoca.push(nomeLimpo(u));
+    }
+
     txt += "\n";
   });
+
   txt += "\nTotal: " + total;
+
+  if(emDoca.length > 0){
+    txt += "\n\nEm Doca: " + emDoca.join(", ");
+  }
+
   return txt;
 }
 
