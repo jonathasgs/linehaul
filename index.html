@@ -183,18 +183,18 @@ function resetar(){
 
 function nomeLimpo(unidade){
   return unidade
-    .replace(" – SP0","")
-    .replace(" – RJ","")
-    .replace(" – BA","")
-    .replace(" - PE","")
-    .replace(" – SP07","")
-    .replace(" – RS","")
-    .replace(" – GO","")
-    .replace(" – MG","")
-    .replace(" – SP05","")
-    .replace(" – PR","")
-    .replace(" - LPR20","")
-    .replace(" - LPR18","");
+    .replace(/\s*[–-]\s*SP07$/, "")
+    .replace(/\s*[–-]\s*SP05$/, "")
+    .replace(/\s*[–-]\s*LPR20$/, "")
+    .replace(/\s*[–-]\s*LPR18$/, "")
+    .replace(/\s*[–-]\s*SP0$/, "")
+    .replace(/\s*[–-]\s*RJ$/, "")
+    .replace(/\s*[–-]\s*BA$/, "")
+    .replace(/\s*[–-]\s*PE$/, "")
+    .replace(/\s*[–-]\s*RS$/, "")
+    .replace(/\s*[–-]\s*GO$/, "")
+    .replace(/\s*[–-]\s*MG$/, "")
+    .replace(/\s*[–-]\s*PR$/, "");
 }
 
 function gerarTexto(){
