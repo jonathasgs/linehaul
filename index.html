@@ -103,8 +103,6 @@ function render(){
 }
 
 function add(i,v){
-  if(navigator.vibrate) navigator.vibrate(10);
-
   valores[i]+=v;
   if(valores[i]<0) valores[i]=0;
   salvar();
@@ -112,16 +110,12 @@ function add(i,v){
 }
 
 function toggle(i){
-  if(navigator.vibrate) navigator.vibrate(15);
-
   carregando[i]=!carregando[i];
   salvar();
   render();
 }
 
 function toggleObs(){
-  if(navigator.vibrate) navigator.vibrate(15);
-
   observacaoAtiva = !observacaoAtiva;
   localStorage.setItem("linehaul_obs", JSON.stringify(observacaoAtiva));
   atualizarBotaoObs();
@@ -154,7 +148,6 @@ function resetar(){
   valores.fill(0);
   carregando.fill(false);
   observacaoAtiva = false;
-
   localStorage.clear();
   render();
   document.getElementById("saida").innerText = "Resetado";
@@ -194,19 +187,18 @@ function gerarTexto(){
 function relatorio(){
   const texto = gerarTexto();
   document.getElementById("saida").innerText = texto;
-  copiarTexto(texto);
 }
 
 async function copiarTexto(texto){
   try{
     if(navigator.clipboard && window.isSecureContext){
       await navigator.clipboard.writeText(texto);
-      alert("Relatório gerado e copiado!");
+      alert("Copiado!");
       return;
     }
   }catch(e){}
   const ok = copiarFallback(texto);
-  alert(ok ? "Relatório gerado e copiado!" : "Gerado, mas não copiou.");
+  alert(ok ? "Copiado!" : "Não foi possível copiar automaticamente.");
 }
 
 async function copiar(){
