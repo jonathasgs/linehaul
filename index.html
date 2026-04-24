@@ -49,6 +49,7 @@ button:active{transform:scale(.98)}
 </style>
 </head>
 <body>
+.instalar{background:#6f42c1;color:#fff}
 <div class="app">
   <div class="topo">
     <h2>Linehaul</h2>
@@ -62,7 +63,7 @@ button:active{transform:scale(.98)}
     <button class="copiar" onclick="copiar()">Copiar</button>
     <button class="truck" id="btnObs" onclick="toggleObs()">🔥</button>
   </div>
-
+<button class="instalar" id="btnInstalar" style="display:none">Instalar app</button>
   <pre id="saida"></pre>
 </div>
 
@@ -276,6 +277,44 @@ async function copiar(){
   alert(ok ? "Copiado!" : "Não foi possível copiar automaticamente.");
 }
 
+let deferredPrompt = null;
+
+function appJaInstalado(){
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  if(appJaInstalado()) return;
+
+  e.preventDefault();
+  deferredPrompt = e;
+
+  const btn = document.getElementById("btnInstalar");
+  if(btn) btn.style.display = "inline-block";
+});
+
+document.getElementById("btnInstalar").addEventListener("click", async () => {
+  if(!deferredPrompt) return;
+
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+
+  deferredPrompt = null;
+  document.getElementById("btnInstalar").style.display = "none";
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredPrompt = null;
+
+  const btn = document.getElementById("btnInstalar");
+  if(btn) btn.style.display = "none";
+});
+
+if(appJaInstalado()){
+  const btn = document.getElementById("btnInstalar");
+  if(btn) btn.style.display = "none";
+}
+  
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./service-worker.js").catch(() => {});
