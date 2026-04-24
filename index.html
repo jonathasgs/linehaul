@@ -14,23 +14,22 @@
 <style>
 :root{
   --bg:#f4f6f8; --card:#ffffff; --text:#1f2937; --muted:#6c757d; --danger:#d9534f;
-  --green:#28a745; --green2:#20c997; --blue:#0dcaf0; --primary:#007bff; --primary-dark:#0b5ed7;
+  --green:#28a745; --green2:#20c997; --blue:#0dcaf0; --primary:#007bff;
   --truck:#adb5bd; --counter:#e9ecef; --shadow:0 1px 2px rgba(0,0,0,.08);
 }
 @media (prefers-color-scheme: dark) {
   :root{
     --bg:#0f1115; --card:#171a21; --text:#e8edf5; --muted:#3c4350; --danger:#d9534f;
-    --green:#198754; --green2:#159b80; --blue:#0ea5c9; --primary:#3d8bfd; --primary-dark:#6ea8fe;
+    --green:#198754; --green2:#159b80; --blue:#0ea5c9; --primary:#3d8bfd;
     --truck:#4b5563; --counter:#242933; --shadow:0 1px 2px rgba(0,0,0,.35);
   }
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
-body{font-family:'Inter',Arial,sans-serif;padding:10px;background:var(--bg);margin:0;color:var(--text);transition:background .2s,color .2s}
+body{font-family:'Inter',Arial,sans-serif;padding:10px;background:var(--bg);margin:0;color:var(--text)}
 .app{max-width:980px;margin:0 auto}
 .topo{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 12px}
 h2{margin:0;font-size:22px;font-weight:700}
-.badge{background:rgba(0,123,255,.12);color:var(--primary-dark);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700}
 .linha{display:flex;align-items:center;gap:6px;margin-bottom:8px}
 button{padding:9px 8px;font-weight:700;border:none;border-radius:8px;font-size:12px;box-shadow:var(--shadow)}
 button:active{transform:scale(.98)}
@@ -46,16 +45,13 @@ button:active{transform:scale(.98)}
 .reset{background:#343a40;color:#fff}
 .relatorio{background:var(--primary);color:#fff}
 .copiar{background:#17a2b8;color:#fff}
-.instalar{background:#6f42c1;color:#fff}
 #saida{white-space:pre-wrap;background:var(--card);padding:12px;border-radius:10px;margin-top:10px;font-size:13px;min-height:72px;box-shadow:var(--shadow)}
-.rodape{margin-top:12px;font-size:12px;opacity:.85}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="topo">
     <h2>Linehaul</h2>
-    <div class="badge" id="statusApp">App pronto</div>
   </div>
 
   <div id="lista"></div>
@@ -64,7 +60,7 @@ button:active{transform:scale(.98)}
     <button class="reset" onclick="resetar()">Resetar</button>
     <button class="relatorio" onclick="relatorio()">Gerar Relatório</button>
     <button class="copiar" onclick="copiar()">Copiar</button>
-    <button class="instalar" id="btnInstalar" style="display:none">Instalar app</button>
+    <button class="truck" id="btnObs" onclick="toggleObs()">🔥</button>
   </div>
 
   <pre id="saida"></pre>
@@ -87,27 +83,28 @@ const unidades = [
 ];
 
 const bolinhas = [
-"🔴", // Santana - Rosa aproximado
-"⚪", // Rio de Janeiro - Cinza aproximado
-"🔵", // Simões Filho - Azul piscina aproximado
-"🟣", // Jaboatão - Roxo
-"🟤", // Louveira - Marrom
-"🟡", // Gravataí - Amarelo
-"🟠", // Goiânia - Laranja
-"🟢", // Betim - Verde musgo aproximado
-"⚫", // Cravinhos - Preto
-"🟢", // Curitiba - Verde
-"🟣", // Londrina - Violeta
-"⚪" // Maringá - Laranja e cinza aproximado
+"🔴",
+"⚪",
+"🔵",
+"🟣",
+"🟤",
+"🟡",
+"🟠",
+"🟢",
+"⚫",
+"🟢",
+"🟣",
+"⚪"
 ];
 
 let valores = new Array(unidades.length).fill(0);
 let carregando = new Array(unidades.length).fill(false);
-let deferredPrompt = null;
+let observacaoAtiva = false;
 
 function render(){
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
+
   unidades.forEach((u,i)=>{
     lista.innerHTML += `
     <div class="linha">
@@ -120,6 +117,8 @@ function render(){
       <button class="truck ${carregando[i]?'ativo':''}" onclick="toggle(${i})">🚚</button>
     </div>`;
   });
+
+  atualizarBotaoObs();
 }
 
 function add(i,v){
@@ -135,6 +134,19 @@ function toggle(i){
   render();
 }
 
+function toggleObs(){
+  observacaoAtiva = !observacaoAtiva;
+  localStorage.setItem("linehaul_obs", JSON.stringify(observacaoAtiva));
+  atualizarBotaoObs();
+}
+
+function atualizarBotaoObs(){
+  const btn = document.getElementById("btnObs");
+  if(btn){
+    btn.classList.toggle("ativo", observacaoAtiva);
+  }
+}
+
 function salvar(){
   localStorage.setItem("linehaul_valores",JSON.stringify(valores));
   localStorage.setItem("linehaul_truck",JSON.stringify(carregando));
@@ -143,20 +155,28 @@ function salvar(){
 function carregar(){
   const v = JSON.parse(localStorage.getItem("linehaul_valores"));
   const t = JSON.parse(localStorage.getItem("linehaul_truck"));
+  const o = JSON.parse(localStorage.getItem("linehaul_obs"));
 
   if(v && v.length===unidades.length) valores=v;
   else localStorage.removeItem("linehaul_valores");
 
   if(t && t.length===unidades.length) carregando=t;
   else localStorage.removeItem("linehaul_truck");
+
+  if(typeof o === "boolean") observacaoAtiva = o;
 }
 
 function resetar(){
   if(!confirm("Resetar tudo?")) return;
+
   valores.fill(0);
   carregando.fill(false);
+  observacaoAtiva = false;
+
   localStorage.removeItem("linehaul_valores");
   localStorage.removeItem("linehaul_truck");
+  localStorage.removeItem("linehaul_obs");
+
   render();
   document.getElementById("saida").innerText = "Resetado";
 }
@@ -178,24 +198,38 @@ function nomeLimpo(unidade){
 }
 
 function gerarTexto(){
-  let total=0, txt="";
+  let total=0;
   let emDoca = [];
 
-  unidades.forEach((u,i)=>{
-    total += valores[i];
-    txt += bolinhas[i] + " " + u + ": " + valores[i];
+  const dados = unidades.map((u,i)=>({
+    nome: nomeLimpo(u),
+    valor: valores[i],
+    bolinha: bolinhas[i],
+    doca: carregando[i]
+  }));
 
-    if(carregando[i]){
-      emDoca.push(nomeLimpo(u));
+  dados.sort((a,b)=>b.valor-a.valor);
+
+  let txt = "📦 LINEHAUL - RESUMO\n\n";
+
+  dados.forEach(item=>{
+    total += item.valor;
+    txt += item.bolinha + " " + item.nome + ": " + item.valor + "\n";
+
+    if(item.doca){
+      emDoca.push(item.nome);
     }
-
-    txt += "\n";
   });
 
-  txt += "\nTotal: " + total;
+  txt += "\n━━━━━━━━━━━━━━━\n";
+  txt += "📊 Total: " + total + "\n";
+
+  if(observacaoAtiva){
+    txt += "\n🔥 Observação:\nContagem aproximada devido à presença de pallets fora das posições corretas e à desorganização parcial da área.\n";
+  }
 
   if(emDoca.length > 0){
-    txt += "\n\nEm Doca: " + emDoca.join(", ");
+    txt += "\n🚚 Em Doca:\n" + emDoca.join(", ");
   }
 
   return txt;
@@ -214,18 +248,22 @@ function copiarFallback(texto){
   document.body.appendChild(area);
   area.focus();
   area.select();
+
   let ok = false;
   try { ok = document.execCommand("copy"); } catch(e) {}
+
   document.body.removeChild(area);
   return ok;
 }
 
 async function copiar(){
   const texto = document.getElementById("saida").innerText.trim();
+
   if(!texto){
     alert("Gere o relatório primeiro!");
     return;
   }
+
   try{
     if(navigator.clipboard && window.isSecureContext){
       await navigator.clipboard.writeText(texto);
@@ -233,24 +271,10 @@ async function copiar(){
       return;
     }
   }catch(e){}
+
   const ok = copiarFallback(texto);
   alert(ok ? "Copiado!" : "Não foi possível copiar automaticamente.");
 }
-
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  document.getElementById("btnInstalar").style.display = "inline-block";
-  document.getElementById("statusApp").innerText = "Pode instalar";
-});
-
-document.getElementById("btnInstalar").addEventListener("click", async () => {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  deferredPrompt = null;
-  document.getElementById("btnInstalar").style.display = "none";
-});
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
