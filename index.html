@@ -37,4 +37,294 @@ button:active{transform:scale(.98)}
 .mais{background:var(--green);color:#fff}
 .mais5{background:var(--green2);color:#fff}
 .mais10{background:var(--blue);color:#062531}
-.nome{background:var(--muted);color:#fff;padding:9px 8px;border-radius:8px;flex:1;font-size:13
+.nome{background:var(--muted);color:#fff;padding:9px 8px;border-radius:8px;flex:1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;box-shadow:var(--shadow)}
+.contador{width:42px;text-align:center;font-weight:700;background:var(--counter);padding:9px;border-radius:8px;box-shadow:var(--shadow)}
+.truck{background:var(--truck);color:#fff}
+.truck.ativo{background:var(--green);color:#fff}
+.acoes{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.reset{background:#343a40;color:#fff}
+.relatorio{background:var(--primary);color:#fff}
+.copiar{background:#17a2b8;color:#fff}
+.instalar{background:#6f42c1;color:#fff}
+#saida{white-space:pre-wrap;background:var(--card);padding:12px;border-radius:10px;margin-top:10px;font-size:13px;min-height:72px;box-shadow:var(--shadow)}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topo">
+    <h2>Linehaul</h2>
+  </div>
+
+  <div id="lista"></div>
+
+  <div class="acoes">
+    <button class="reset" onclick="resetar()">Resetar</button>
+    <button class="relatorio" onclick="relatorio()">Gerar Relatório</button>
+    <button class="copiar" onclick="copiar()">Copiar</button>
+    <button class="truck" id="btnObs" onclick="toggleObs()">🔥</button>
+    <button class="instalar" id="btnInstalar" style="display:none">Instalar app</button>
+  </div>
+
+  <pre id="saida"></pre>
+</div>
+
+<script>
+const unidades = [
+"Santana – SP0",
+"Rio de Janeiro – RJ",
+"Simões Filho – BA",
+"Jaboatão - PE",
+"Louveira – SP07",
+"Gravataí – RS",
+"Goiânia – GO",
+"Betim – MG",
+"Cravinhos – SP05",
+"Curitiba – PR",
+"Londrina - LPR20",
+"Maringá - LPR18"
+];
+
+const bolinhas = [
+"🔴",
+"⚪",
+"🔵",
+"🟣",
+"🟤",
+"🟡",
+"🟠",
+"🟢",
+"⚫",
+"🟢",
+"🟣",
+"⚪"
+];
+
+let valores = new Array(unidades.length).fill(0);
+let carregando = new Array(unidades.length).fill(false);
+let observacaoAtiva = false;
+
+function render(){
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  unidades.forEach((u,i)=>{
+    lista.innerHTML += `
+    <div class="linha">
+      <button class="menos" onclick="add(${i},-1)">-</button>
+      <div class="nome">${u}</div>
+      <button class="mais" onclick="add(${i},1)">+1</button>
+      <button class="mais5" onclick="add(${i},5)">+5</button>
+      <button class="mais10" onclick="add(${i},10)">+10</button>
+      <div class="contador">${valores[i]}</div>
+      <button class="truck ${carregando[i]?'ativo':''}" onclick="toggle(${i})">🚚</button>
+    </div>`;
+  });
+
+  atualizarBotaoObs();
+}
+
+function add(i,v){
+  valores[i]+=v;
+  if(valores[i]<0) valores[i]=0;
+  salvar();
+  render();
+}
+
+function toggle(i){
+  carregando[i]=!carregando[i];
+  salvar();
+  render();
+}
+
+function toggleObs(){
+  observacaoAtiva = !observacaoAtiva;
+  localStorage.setItem("linehaul_obs", JSON.stringify(observacaoAtiva));
+  atualizarBotaoObs();
+}
+
+function atualizarBotaoObs(){
+  const btn = document.getElementById("btnObs");
+  if(btn){
+    btn.classList.toggle("ativo", observacaoAtiva);
+  }
+}
+
+function salvar(){
+  localStorage.setItem("linehaul_valores",JSON.stringify(valores));
+  localStorage.setItem("linehaul_truck",JSON.stringify(carregando));
+}
+
+function carregar(){
+  const v = JSON.parse(localStorage.getItem("linehaul_valores"));
+  const t = JSON.parse(localStorage.getItem("linehaul_truck"));
+  const o = JSON.parse(localStorage.getItem("linehaul_obs"));
+
+  if(v && v.length===unidades.length) valores=v;
+  else localStorage.removeItem("linehaul_valores");
+
+  if(t && t.length===unidades.length) carregando=t;
+  else localStorage.removeItem("linehaul_truck");
+
+  if(typeof o === "boolean") observacaoAtiva = o;
+}
+
+function resetar(){
+  if(!confirm("Resetar tudo?")) return;
+
+  valores.fill(0);
+  carregando.fill(false);
+  observacaoAtiva = false;
+
+  localStorage.removeItem("linehaul_valores");
+  localStorage.removeItem("linehaul_truck");
+  localStorage.removeItem("linehaul_obs");
+
+  render();
+  document.getElementById("saida").innerText = "Resetado";
+}
+
+function nomeLimpo(unidade){
+  return unidade
+    .replace(/\s*[–-]\s*SP07$/, "")
+    .replace(/\s*[–-]\s*SP05$/, "")
+    .replace(/\s*[–-]\s*LPR20$/, "")
+    .replace(/\s*[–-]\s*LPR18$/, "")
+    .replace(/\s*[–-]\s*SP0$/, "")
+    .replace(/\s*[–-]\s*RJ$/, "")
+    .replace(/\s*[–-]\s*BA$/, "")
+    .replace(/\s*[–-]\s*PE$/, "")
+    .replace(/\s*[–-]\s*RS$/, "")
+    .replace(/\s*[–-]\s*GO$/, "")
+    .replace(/\s*[–-]\s*MG$/, "")
+    .replace(/\s*[–-]\s*PR$/, "");
+}
+
+function gerarTexto(){
+  let total=0;
+  let emDoca = [];
+
+  const dados = unidades.map((u,i)=>({
+    nome: nomeLimpo(u),
+    valor: valores[i],
+    bolinha: bolinhas[i],
+    doca: carregando[i]
+  }));
+
+  dados.sort((a,b)=>b.valor-a.valor);
+
+  let txt = "📦 LINEHAUL - RESUMO\n\n";
+
+  dados.forEach(item=>{
+    total += item.valor;
+    txt += item.bolinha + " " + item.nome + ": " + item.valor + "\n";
+
+    if(item.doca){
+      emDoca.push(item.nome);
+    }
+  });
+
+  txt += "\n━━━━━━━━━━━━━━━\n";
+  txt += "📊 Total: " + total + "\n";
+
+  if(observacaoAtiva){
+    txt += "\n🔥 Observação:\nContagem aproximada devido à presença de pallets fora das posições corretas e à desorganização parcial da área.\n";
+  }
+
+  if(emDoca.length > 0){
+    txt += "\n🚚 Em Doca:\n" + emDoca.join(", ");
+  }
+
+  return txt;
+}
+
+function relatorio(){
+  document.getElementById("saida").innerText = gerarTexto();
+}
+
+function copiarFallback(texto){
+  const area = document.createElement("textarea");
+  area.value = texto;
+  area.setAttribute("readonly","");
+  area.style.position = "fixed";
+  area.style.left = "-9999px";
+  document.body.appendChild(area);
+  area.focus();
+  area.select();
+
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch(e) {}
+
+  document.body.removeChild(area);
+  return ok;
+}
+
+async function copiar(){
+  const texto = document.getElementById("saida").innerText.trim();
+
+  if(!texto){
+    alert("Gere o relatório primeiro!");
+    return;
+  }
+
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(texto);
+      alert("Copiado!");
+      return;
+    }
+  }catch(e){}
+
+  const ok = copiarFallback(texto);
+  alert(ok ? "Copiado!" : "Não foi possível copiar automaticamente.");
+}
+
+let deferredPrompt = null;
+
+function appJaInstalado(){
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  if(appJaInstalado()) return;
+
+  e.preventDefault();
+  deferredPrompt = e;
+
+  const btn = document.getElementById("btnInstalar");
+  if(btn) btn.style.display = "inline-block";
+});
+
+document.getElementById("btnInstalar").addEventListener("click", async () => {
+  if(!deferredPrompt) return;
+
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+
+  deferredPrompt = null;
+  document.getElementById("btnInstalar").style.display = "none";
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredPrompt = null;
+
+  const btn = document.getElementById("btnInstalar");
+  if(btn) btn.style.display = "none";
+});
+
+if(appJaInstalado()){
+  const btn = document.getElementById("btnInstalar");
+  if(btn) btn.style.display = "none";
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  });
+}
+
+carregar();
+render();
+</script>
+</body>
+</html>
